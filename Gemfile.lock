@@ -1,0 +1,29 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    commonmarker (2.9.0)
+      rb_sys (~> 0.9)
+    commonmarker (2.9.0-arm64-darwin)
+    openapi3_parser (0.10.1)
+      commonmarker (>= 1.0)
+    rake-compiler-dock (1.12.0)
+    rb_sys (0.9.130)
+      rake-compiler-dock (= 1.12.0)
+
+PLATFORMS
+  arm64-darwin-25
+  ruby
+
+DEPENDENCIES
+  openapi3_parser (~> 0.10.1)
+
+CHECKSUMS
+  bundler (4.0.19) sha256=b48056e4c77fb3853cc47775b5447ede44aaa4f53c32f168014ab4fe86587d47
+  commonmarker (2.9.0) sha256=9cf7848393bd56f0c34407b81c147568994048922cb05a50caca464d680607d2
+  commonmarker (2.9.0-arm64-darwin) sha256=1748dbfa4f5813b0d2a14bb4bbfa65a4ec293aa1c825016d60029ee0e132b046
+  openapi3_parser (0.10.1) sha256=e373bfcec1f183252a51fbe28787b52c4052e045697bae1778258bb9b3296a19
+  rake-compiler-dock (1.12.0) sha256=f13205c2738f3d2053afcd03491a9e4541b22a59a0bfc53fc8bc883bd8188023
+  rb_sys (0.9.130) sha256=7d486d99c1da02635515deaf9860fc5aea90bb4ab2589b2deec7fdc7d3548615
+
+BUNDLED WITH
+  4.0.19
