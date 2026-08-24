@@ -1,7 +1,8 @@
 class ResultObjectBase
-  def initialize(message, status)
+  def initialize(message, status, data)
     @message = message
     @status = status
+    @data = data
   end
 
   def success?
@@ -18,5 +19,9 @@ class ResultObjectBase
 
   def status
     @status
+  end
+
+  def data
+    @data
   end
 end

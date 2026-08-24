@@ -1,8 +1,8 @@
 require_relative "./base"
 
 class FailureResultObject < ResultObjectBase
-  def initialize(message, status = nil)
-    super(message, status)
+  def initialize(message = nil, status = nil, data: nil)
+    super(message, status, data)
     @success = false
   end
 

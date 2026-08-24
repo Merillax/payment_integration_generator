@@ -12,12 +12,16 @@ class OpenApiYamlParser
     result = validate
     return result unless result.success?
 
-    print(open_api_data)
+    return SuccessResultObject.new(data: open_api_data)
   end
 
   def validate
-    return FailureResultObject.new(open_api_data.errors) unless open_api_data.valid?
-    SuccessResultObject("Success")
+    return FailureResultObject.new(open_api_data.errors.inspect) unless open_api_data.valid?
+    return FailureResultObject.new("Конфигурация не содержит блока 'info'") if open_api_data["info"].nil?
+    return FailureResultObject.new("Конфигурация не содержит наименования проектной конфигурации") if open_api_data["info"]["title"].nil? || open_api_data["info"]["title"].empty?
+
+
+    SuccessResultObject.new("Success")
   end
 
   private

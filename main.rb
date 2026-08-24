@@ -1,4 +1,5 @@
 require_relative "lib/parsers/open_api_yaml_parser"
+require_relative "lib/generators/base"
 
 yaml_file_path = ARGV[0]
 
@@ -12,8 +13,24 @@ unless File.exist?(yaml_file_path)
   exit 1
 end
 
-result = OpenApiYamlParser.new(yaml_file_path).validate
-print(result.message)
+result = OpenApiYamlParser.new(yaml_file_path).parse
+if result.failure?
+  puts result.message 
+  exit 1
+end
+
+puts result.data["components"]["schemas"]["Money"].to_h
+result.data["components"]["schemas"].each do |hh|
+  puts hh
+end
+
+
+result = BaseGenerator.new(result.data).start_generation
+if result.failure?
+  puts result.message 
+  exit 1
+end
+
 
 
 

@@ -1,0 +1,15 @@
+# Автоматически сгенерировано из OpenAPI спецификации.
+
+# <%= class_description %>
+class <%= class_name %>
+<% fields.each do |field| -%>
+  # @return [<%= field.type %>] <%= field.description %>
+<% end -%>
+  attr_reader <%= fields.map { |f| ":#{f.name}" }.join(", ") %>
+
+  def initialize(<%= fields.map { |f| "#{f.name}:" }.join(", ") %>)
+<% fields.each do |field| -%>
+    @<%= field.name %> = <%= field.name %>
+<% end -%>
+  end
+end
