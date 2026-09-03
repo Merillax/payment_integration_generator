@@ -1,15 +1,15 @@
-class <%= @integration_name %>
-  def initialize; end
-<%- @openapi_document.paths.each do |key, node| -%>
-<%- SUPPORTED_HTTP_METHODS.each do |http_method| -%>
-  <%- operation_item = node.send(http_method) -%>
-  <%- next if operation_item.nil? -%>
+class Provider
+  class <%= @integration_name %>Service < BaseService
+    BASE_URL = ENV.fetch('<%= @integration_name.upcase %>_BASE_URL', '<%= provider_default_url %>')
 
-  # <%= http_method.to_s.upcase %> <%= key %>
-  # <%= (operation_item.description || operation_item.summary || "").strip %>
-  def <%= collect_method_name(operation_item) %><% collect_method_args(operation_item) %>
-    # TODO: method body
+  <%- PROVIDER_PUBLIC_METHODS.each do |method| -%>
+    <%= render_partial "provider_methods/#{method}", { document: @openapi_document } %>
+  <%- end -%>
+
+    private
+
+  <%- PROVIDER_PRIVATE_METHODS.each do |method| -%>
+    <%= render_partial "provider_methods/#{method}", { document: @openapi_document } %>
+  <%- end -%>
   end
-<%- end -%>
-<%- end -%>
 end

@@ -1,0 +1,10 @@
+def create_request(operation, request_method = 'create')
+<%- uri, path_item = PaymentIntegrationGenerator::CreateRequestSearcher.new(document:).call -%>
+  payload = build_payout_payload(operation)
+  response = client.post("#{BASE_URL}<%= uri %>", json: payload, headers: auth_headers)
+  parse_create_response(operation, response)
+rescue Provider::RateLimitError
+  failure(:too_many_requests, 'provider.rate_limit')
+rescue Provider::UnauthorizedError
+  failure(:unauthorized, 'provider.invalid_credentials')
+end

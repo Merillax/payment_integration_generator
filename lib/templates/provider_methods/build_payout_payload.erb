@@ -1,0 +1,13 @@
+def build_payout_payload(operation)
+  {
+    amount: (operation.amount * 100).to_i,
+    currency: 'RUB',
+    external_id: operation.id,
+    recipient: {
+      type: 'sbp',
+      phone: operation.payout_requisite.dig('sbp', 'phone'),
+      bank_code: operation.payout_requisite.dig('sbp', 'bank_code'),
+      bank_name: operation.payout_requisite.dig('sbp', 'bank_name')
+    }
+  }
+end
