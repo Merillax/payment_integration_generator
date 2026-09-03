@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require "payment_integration_generator"
+
+# Если используете Thor
+PaymentIntegrationGenerator::CLI.start(ARGV)

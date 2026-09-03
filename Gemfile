@@ -2,8 +2,8 @@
 
 source "https://rubygems.org"
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+# Specify your gem's dependencies in payment_integration_generator.gemspec
+gemspec
 
-# gem "rails"
-
-gem "openapi3_parser", "~> 0.10.1"
+gem "irb"
+gem "rubocop", "~> 1.21"
