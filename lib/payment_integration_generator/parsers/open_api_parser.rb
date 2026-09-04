@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "openapi3_parser"
 # require_relative "../service_result_object/failure_result_object"
 # require_relative "../service_result_object/success_result_object"
 

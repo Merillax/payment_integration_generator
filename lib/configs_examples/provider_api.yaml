@@ -1,530 +1,430 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
-  title: DemoPay API
-  description: >
-    Тестовая спецификация платёжного провайдера для хакатона.
-    Содержит все ключевые элементы: методы, параметры, авторизацию,
-    статусы, ошибки и вебхуки (уведомления).
-  version: "1.2.0"
+  title: NovaPay Payout API
+  description: |
+    Mock API платёжного провайдера NovaPay для хакатона Space Payments.
+    Поддерживает создание выплат через СБП, проверку статуса и webhook-уведомления.
+  version: 1.0.0
   contact:
-    name: DemoPay Support
-    email: support@demopay.example.com
+    name: NovaPay Integration Team
+    email: integration@novapay.example
 
 servers:
-  - url: https://api.demopay.example.com/v1
-    description: Production
-  - url: https://sandbox.demopay.example.com/v1
+  - url: https://api.sandbox.novapay.example/v1
     description: Sandbox
+  - url: https://api.novapay.example/v1
+    description: Production
 
-# =========================================================
-# АВТОРИЗАЦИЯ
-# =========================================================
+tags:
+  - name: Payouts
+    description: Операции выплат
+  - name: Webhooks
+    description: Уведомления о смене статуса
+
+paths:
+  /payouts:
+    post:
+      tags: [Payouts]
+      summary: Создать выплату
+      description: |
+        Создаёт новую выплату на счёт получателя через СБП.
+        Сумма передаётся в копейках. Минимальная сумма — 1000 RUB (100000 коп.).
+      operationId: createPayout
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePayoutRequest'
+            examples:
+              sbp_payout:
+                summary: Выплата через СБП
+                value:
+                  amount: 1500000
+                  currency: RUB
+                  external_id: "op_abc123"
+                  recipient:
+                    type: sbp
+                    phone: "79001234567"
+                    bank_code: "044525225"
+                    bank_name: "Сбербанк"
+      responses:
+        '201':
+          description: Выплата создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutResponse'
+              example:
+                id: "np_7f3a9b2c"
+                external_id: "op_abc123"
+                status: pending
+                amount: 1500000
+                currency: RUB
+                created_at: "2026-07-30T10:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Недостаточно средств на балансе провайдера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: insufficient_balance
+                  message: "Insufficient provider balance"
+        '409':
+          description: Дубликат по idempotency key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: validation_error
+                  message: "Amount must be at least 100000 kopecks"
+                  details:
+                    - field: amount
+                      message: "minimum is 100000"
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /payouts/{payout_id}:
+    get:
+      tags: [Payouts]
+      summary: Получить статус выплаты
+      operationId: getPayoutStatus
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: payout_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "np_7f3a9b2c"
+      responses:
+        '200':
+          description: Статус выплаты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Выплата не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: not_found
+                  message: "Payout not found"
+
+  /payouts/{payout_id}/cancel:
+    post:
+      tags: [Payouts]
+      summary: Отменить выплату
+      description: Отмена возможна только в статусах pending и processing
+      operationId: cancelPayout
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: payout_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Выплата отменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutResponse'
+        '409':
+          description: Невозможно отменить в текущем статусе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: invalid_status
+                  message: "Cannot cancel payout in status completed"
+
+  /webhooks/payout:
+    post:
+      tags: [Webhooks]
+      summary: Webhook уведомление о смене статуса
+      description: |
+        NovaPay отправляет POST-запрос на URL, указанный при регистрации.
+        Подпись передаётся в заголовке X-NovaPay-Signature (HMAC-SHA256).
+      operationId: payoutWebhook
+      security: []
+      parameters:
+        - name: X-NovaPay-Signature
+          in: header
+          required: true
+          schema:
+            type: string
+          description: HMAC-SHA256 подпись тела запроса
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookPayload'
+            examples:
+              completed:
+                summary: Выплата завершена
+                value:
+                  event: payout.completed
+                  payout_id: "np_7f3a9b2c"
+                  external_id: "op_abc123"
+                  status: completed
+                  completed_at: "2026-07-30T10:05:00Z"
+              failed:
+                summary: Выплата отклонена
+                value:
+                  event: payout.failed
+                  payout_id: "np_7f3a9b2c"
+                  external_id: "op_abc123"
+                  status: failed
+                  error:
+                    code: recipient_not_found
+                    message: "Recipient account not found"
+      responses:
+        '200':
+          description: Webhook принят
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+
+  /balance:
+    get:
+      tags: [Payouts]
+      summary: Баланс провайдера
+      operationId: getBalance
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Текущий баланс
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: integer
+                    description: Баланс в копейках
+                    example: 500000000
+                  currency:
+                    type: string
+                    example: RUB
+                  hold:
+                    type: integer
+                    description: Замороженная сумма
+                    example: 15000000
+
 components:
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-API-Key
-      description: Простой API-ключ, передаётся в заголовке каждого запроса
+      description: API-ключ, выдаётся при подключении
 
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: OAuth2-токен, получается отдельным эндпоинтом /auth/token
-
-    WebhookSignature:
-      type: apiKey
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
       in: header
-      name: X-DemoPay-Signature
-      description: >
-        HMAC-SHA256 подпись тела вебхука. Не является "авторизацией" запроса
-        в классическом смысле, но используется для проверки подлинности уведомлений.
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Ключ идемпотентности для предотвращения дублей
 
-  # =========================================================
-  # СХЕМЫ ДАННЫХ (DTO)
-  # =========================================================
   schemas:
-    Money:
+    CreatePayoutRequest:
       type: object
-      required: [amount, currency]
+      required: [amount, currency, external_id, recipient]
       properties:
         amount:
           type: integer
-          description: Сумма в минимальных единицах валюты (копейки/центы)
-          example: 15000
+          description: Сумма в копейках
+          minimum: 100000
+          example: 1500000
         currency:
           type: string
-          description: Код валюты ISO 4217
-          enum: [RUB, USD, EUR]
+          enum: [RUB]
           example: RUB
+        external_id:
+          type: string
+          description: ID операции на стороне мерчанта
+          maxLength: 64
+          example: "op_abc123"
+        recipient:
+          $ref: '#/components/schemas/Recipient'
 
-    PaymentStatus:
-      type: string
-      description: Текущий статус платежа
-      enum: [pending, processing, succeeded, failed, refunded, canceled]
-
-    PaymentMethod:
+    Recipient:
       type: object
-      required: [type]
+      required: [type, phone]
       properties:
         type:
           type: string
-          enum: [card, sbp, wallet]
-        card_last4:
+          enum: [sbp, card]
+          example: sbp
+        phone:
           type: string
-          description: Последние 4 цифры карты (если type=card)
-          example: "4242"
+          pattern: '^7\d{10}$'
+          description: Телефон получателя (11 цифр, начинается с 7)
+          example: "79001234567"
+        bank_code:
+          type: string
+          description: БИК банка (обязателен для type=sbp)
+          example: "044525225"
+        bank_name:
+          type: string
+          example: "Сбербанк"
+        card_number:
+          type: string
+          description: Номер карты (обязателен для type=card)
+          example: "4111111111111111"
 
-    Payment:
+    PayoutResponse:
       type: object
-      required: [payment_id, status, amount, currency, created_at]
       properties:
-        payment_id:
+        id:
           type: string
-          example: "pay_9f8a7b6c"
-        order_id:
+          example: "np_7f3a9b2c"
+        external_id:
           type: string
-          example: "order_12345"
+          example: "op_abc123"
         status:
-          $ref: "#/components/schemas/PaymentStatus"
+          type: string
+          enum: [pending, processing, completed, failed, cancelled]
         amount:
           type: integer
-          example: 15000
+          example: 1500000
         currency:
           type: string
           example: RUB
-        payment_method:
-          $ref: "#/components/schemas/PaymentMethod"
-        description:
-          type: string
-          example: "Оплата заказа №12345"
+        recipient:
+          $ref: '#/components/schemas/Recipient'
+        error:
+          $ref: '#/components/schemas/PayoutError'
         created_at:
           type: string
           format: date-time
-          example: "2026-08-22T10:15:30Z"
-        confirmation_url:
+        completed_at:
           type: string
-          description: Ссылка для подтверждения оплаты пользователем (3DS/редирект)
-          example: "https://sandbox.demopay.example.com/confirm/pay_9f8a7b6c"
+          format: date-time
 
-    CreatePaymentRequest:
+    PayoutError:
       type: object
-      required: [amount, currency, order_id]
       properties:
-        amount:
-          type: integer
-          example: 15000
-        currency:
+        code:
           type: string
-          enum: [RUB, USD, EUR]
-          example: RUB
-        order_id:
-          type: string
-          example: "order_12345"
-        description:
-          type: string
-          example: "Оплата заказа №12345"
-        return_url:
-          type: string
-          description: Куда вернуть пользователя после оплаты
-          example: "https://shop.example.com/order/12345/success"
-        capture:
-          type: boolean
-          description: Автоматически списывать средства (true) или только заблокировать (false)
-          default: true
-
-    RefundRequest:
-      type: object
-      required: [payment_id, amount]
-      properties:
-        payment_id:
-          type: string
-          example: "pay_9f8a7b6c"
-        amount:
-          type: integer
-          description: Сумма возврата в минимальных единицах
-          example: 5000
-        reason:
-          type: string
-          example: "Клиент отказался от товара"
-
-    Refund:
-      type: object
-      required: [refund_id, payment_id, status, amount]
-      properties:
-        refund_id:
-          type: string
-          example: "ref_1a2b3c"
-        payment_id:
-          type: string
-          example: "pay_9f8a7b6c"
-        status:
-          type: string
-          enum: [pending, succeeded, failed]
-        amount:
-          type: integer
-          example: 5000
-
-    Error:
-      type: object
-      required: [error_code, message]
-      properties:
-        error_code:
-          type: string
-          example: "invalid_request"
+          enum:
+            - validation_error
+            - insufficient_balance
+            - recipient_not_found
+            - bank_unavailable
+            - amount_limit_exceeded
+            - rate_limit_exceeded
+            - internal_error
         message:
           type: string
-          example: "Поле amount обязательно для заполнения"
-        details:
-          type: object
-          additionalProperties: true
 
-  # =========================================================
-  # ПЕРЕИСПОЛЬЗУЕМЫЕ ОТВЕТЫ (ошибки)
-  # =========================================================
+    WebhookPayload:
+      type: object
+      required: [event, payout_id, status]
+      properties:
+        event:
+          type: string
+          enum:
+            - payout.completed
+            - payout.failed
+            - payout.processing
+            - payout.cancelled
+        payout_id:
+          type: string
+        external_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, cancelled]
+        completed_at:
+          type: string
+          format: date-time
+        error:
+          $ref: '#/components/schemas/PayoutError'
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/PayoutError'
+
   responses:
     BadRequest:
-      description: Некорректные параметры запроса
+      description: Некорректный запрос
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
-          example:
-            error_code: invalid_request
-            message: "Поле amount обязательно для заполнения"
-
+            $ref: '#/components/schemas/ErrorResponse'
     Unauthorized:
-      description: Неверный или отсутствующий API-ключ / токен
+      description: Невалидный API-ключ
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/ErrorResponse'
           example:
-            error_code: authentication_error
-            message: "Неверный API-ключ"
-
-    NotFound:
-      description: Объект не найден
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-          example:
-            error_code: not_found
-            message: "Платёж с указанным ID не найден"
-
+            error:
+              code: unauthorized
+              message: "Invalid API key"
     RateLimited:
       description: Превышен лимит запросов
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Секунд до повторной попытки
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/ErrorResponse'
           example:
-            error_code: rate_limited
-            message: "Слишком много запросов, повторите позже"
-
-    ServerError:
+            error:
+              code: rate_limit_exceeded
+              message: "Rate limit exceeded, retry after 60 seconds"
+    InternalError:
       description: Внутренняя ошибка провайдера
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
-          example:
-            error_code: internal_error
-            message: "Внутренняя ошибка сервера, попробуйте позже"
-
-  parameters:
-    PaymentIdPath:
-      name: payment_id
-      in: path
-      required: true
-      description: Идентификатор платежа
-      schema:
-        type: string
-      example: "pay_9f8a7b6c"
-
-    LimitQuery:
-      name: limit
-      in: query
-      required: false
-      description: Количество записей на странице (пагинация)
-      schema:
-        type: integer
-        default: 20
-        minimum: 1
-        maximum: 100
-
-    CursorQuery:
-      name: cursor
-      in: query
-      required: false
-      description: Курсор для пагинации (значение из предыдущего ответа)
-      schema:
-        type: string
-
-# =========================================================
-# ГЛОБАЛЬНАЯ АВТОРИЗАЦИЯ ПО УМОЛЧАНИЮ
-# =========================================================
-security:
-  - ApiKeyAuth: []
-
-# =========================================================
-# МЕТОДЫ (paths)
-# =========================================================
-paths:
-  /payments:
-    post:
-      operationId: createPayment
-      summary: Создать платёж
-      description: Создаёт новый платёж и возвращает ссылку на подтверждение оплаты.
-      tags: [Payments]
-      security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreatePaymentRequest"
-      responses:
-        "201":
-          description: Платёж успешно создан
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Payment"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "429":
-          $ref: "#/components/responses/RateLimited"
-        "500":
-          $ref: "#/components/responses/ServerError"
-
-    get:
-      operationId: listPayments
-      summary: Получить список платежей
-      description: Возвращает список платежей с пагинацией.
-      tags: [Payments]
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - $ref: "#/components/parameters/LimitQuery"
-        - $ref: "#/components/parameters/CursorQuery"
-        - name: status
-          in: query
-          required: false
-          description: Фильтр по статусу платежа
-          schema:
-            $ref: "#/components/schemas/PaymentStatus"
-      responses:
-        "200":
-          description: Список платежей
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Payment"
-                  next_cursor:
-                    type: string
-                    nullable: true
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-  /payments/{payment_id}:
-    get:
-      operationId: getPayment
-      summary: Получить платёж по ID
-      description: Возвращает подробную информацию о конкретном платеже.
-      tags: [Payments]
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - $ref: "#/components/parameters/PaymentIdPath"
-      responses:
-        "200":
-          description: Информация о платеже
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Payment"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  /payments/{payment_id}/capture:
-    post:
-      operationId: capturePayment
-      summary: Подтвердить (списать) заблокированный платёж
-      description: >
-        Используется, если при создании платежа был передан capture=false —
-        средства были заблокированы, но не списаны.
-      tags: [Payments]
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - $ref: "#/components/parameters/PaymentIdPath"
-      responses:
-        "200":
-          description: Платёж подтверждён и списан
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Payment"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  /payments/{payment_id}/cancel:
-    post:
-      operationId: cancelPayment
-      summary: Отменить платёж
-      tags: [Payments]
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - $ref: "#/components/parameters/PaymentIdPath"
-      responses:
-        "200":
-          description: Платёж отменён
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Payment"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  /refunds:
-    post:
-      operationId: createRefund
-      summary: Создать возврат средств
-      tags: [Refunds]
-      security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RefundRequest"
-      responses:
-        "201":
-          description: Возврат создан
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Refund"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  /auth/token:
-    post:
-      operationId: issueToken
-      summary: Получить Bearer-токен по client_id/client_secret
-      description: Отдельный метод авторизации по OAuth2 client_credentials flow.
-      tags: [Auth]
-      security: []   # этот метод не требует авторизации — сам её выдаёт
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [client_id, client_secret]
-              properties:
-                client_id:
-                  type: string
-                client_secret:
-                  type: string
-      responses:
-        "200":
-          description: Токен выдан
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                  expires_in:
-                    type: integer
-                    example: 3600
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-# =========================================================
-# УВЕДОМЛЕНИЯ / ВЕБХУКИ (OpenAPI 3.1 нативная секция)
-# =========================================================
-webhooks:
-  paymentStatusChanged:
-    post:
-      operationId: paymentStatusChangedWebhook
-      summary: Уведомление об изменении статуса платежа
-      description: >
-        Провайдер отправляет POST-запрос на ваш callback URL при каждом
-        изменении статуса платежа. Тело подписывается заголовком
-        X-DemoPay-Signature (HMAC-SHA256 от секретного ключа).
-      security:
-        - WebhookSignature: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [event_type, payment]
-              properties:
-                event_type:
-                  type: string
-                  enum: [payment.succeeded, payment.failed, payment.canceled]
-                payment:
-                  $ref: "#/components/schemas/Payment"
-                occurred_at:
-                  type: string
-                  format: date-time
-            example:
-              event_type: payment.succeeded
-              occurred_at: "2026-08-22T10:16:02Z"
-              payment:
-                payment_id: "pay_9f8a7b6c"
-                order_id: "order_12345"
-                status: succeeded
-                amount: 15000
-                currency: RUB
-                created_at: "2026-08-22T10:15:30Z"
-      responses:
-        "200":
-          description: Уведомление успешно обработано (провайдер ожидает 200 OK)
-
-  refundStatusChanged:
-    post:
-      operationId: refundStatusChangedWebhook
-      summary: Уведомление об изменении статуса возврата
-      security:
-        - WebhookSignature: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [event_type, refund]
-              properties:
-                event_type:
-                  type: string
-                  enum: [refund.succeeded, refund.failed]
-                refund:
-                  $ref: "#/components/schemas/Refund"
-      responses:
-        "200":
-          description: Уведомление успешно обработано
+            $ref: '#/components/schemas/ErrorResponse'

@@ -1,0 +1,4 @@
+def fetch_status(operation)
+  response = client.get("#{BASE_URL}/payouts/#{operation.provider_operation_id}")
+  map_status(response.body['status'])
+end

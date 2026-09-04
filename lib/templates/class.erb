@@ -1,0 +1,15 @@
+class Provider
+  class <%= @integration_name %>Service < BaseService
+    BASE_URL = ENV.fetch('<%= @integration_name.upcase %>_BASE_URL', '<%= provider_default_url %>')
+
+  <%- PROVIDER_PUBLIC_METHODS.each do |method| -%>
+    <%= render_partial "provider_methods/#{method}", { document: @openapi_document } %>
+  <%- end -%>
+
+    private
+
+  <%- PROVIDER_PRIVATE_METHODS.each do |method| -%>
+    <%= render_partial "provider_methods/#{method}", { document: @openapi_document } %>
+  <%- end -%>
+  end
+end

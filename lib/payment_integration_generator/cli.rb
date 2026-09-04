@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "thor"
-require_relative "parsers/open_api_parser"
 
 module PaymentIntegrationGenerator
   class CLI < Thor
@@ -21,14 +20,19 @@ module PaymentIntegrationGenerator
 
       puts "Generating #{integration_name} integration based on OpenAPI specification..."
 
-      @document = OpenApiParser.new(file_path: options[:file], url: options[:url])
-                               .parse
+      document = OpenApiParser.new(file_path: options[:file], url: options[:url])
+                              .parse
 
       # TODO: run integration generator
+      PaymentIntegrationGenerator::IntegrationGenerator.new(
+        openapi_document: document,
+        integration_name: integration_name,
+        # output_folder_path: options[:output_folder]
+      ).call
 
       puts "Done!"
     rescue StandardError => e
-      puts "Error: #{e.message}"
+      puts "Error: #{e.message}. Backtrace: #{e.backtrace}"
       exit 1
     end
   end
