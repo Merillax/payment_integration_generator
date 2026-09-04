@@ -1,0 +1,126 @@
+# <%= @integration_name %> — integration guide
+
+> **<%= api_title %>**
+> <%= api_description %>
+
+## Environments
+
+| Environment | Base URL |
+|---|---|
+<% environments.each do |environment| -%>
+| <%= environment[:name] %> | `<%= environment[:url] %>` |
+<% end -%>
+
+## Авторизация
+
+**Тип:** <%= extract_auth_info[:type] %>
+<% if extract_auth_info[:header] -%>
+
+Передавайте credentials в заголовке `<%= extract_auth_info[:header] %>`. <%= extract_auth_info[:description] %>
+<% end -%>
+
+## API operations
+
+<% operations.each do |operation| -%>
+### `<%= operation[:verb] %> <%= operation[:path] %>` — `<%= operation[:id] %>`
+
+<%= operation[:description] || operation[:summary] %>
+
+<% unless operation[:parameters].empty? -%>
+**Parameters**
+
+| Name | In | Required | Type | Description | Example |
+|---|---|---:|---|---|---|
+<% operation[:parameters].each do |parameter| -%>
+| `<%= parameter[:name] %>` | <%= parameter[:location] %> | <%= parameter[:required] %> | <%= parameter[:type] %> | <%= parameter[:description] %> | <%= parameter[:example] %> |
+<% end -%>
+
+<% end -%>
+<% if operation[:request] -%>
+**Request body** (`<%= operation[:request][:type] %>`)
+
+<%= operation[:request][:description] %>
+
+| Field | Required | Type | Description | Constraints | Example |
+|---|---:|---|---|---|---|
+<% operation[:request][:fields].each do |field| -%>
+| `<%= field[:name] %>` | <%= field[:required] %> | <%= field[:type] %> | <%= field[:description] %> | <%= field[:constraints] %> | <%= field[:example] %> |
+<% end -%>
+
+<% if operation[:request][:example] -%>
+Example:
+
+```json
+<%= pretty_example(operation[:request][:example]) %>
+```
+
+<% end -%>
+<% end -%>
+**Responses**
+
+| HTTP | Description | Body |
+|---:|---|---|
+<% operation[:responses].each do |response| -%>
+| <%= response[:code] %> | <%= response[:description] %> | <%= response[:body] ? response[:body][:type] : "-" %> |
+<% end -%>
+
+<% operation[:responses].each do |response| -%>
+<% next unless response[:body] && !response[:body][:fields].empty? -%>
+**Response `<%= response[:code] %>` fields**
+
+| Field | Type | Description | Constraints | Example |
+|---|---|---|---|---|
+<% response[:body][:fields].each do |field| -%>
+| `<%= field[:name] %>` | <%= field[:type] %> | <%= field[:description] %> | <%= field[:constraints] %> | <%= field[:example] %> |
+<% end -%>
+
+<% end -%>
+
+<% operation[:responses].each do |response| -%>
+<% next unless response[:body] && response[:body][:example] -%>
+Example for `<%= response[:code] %>`:
+
+```json
+<%= pretty_example(response[:body][:example]) %>
+```
+
+<% end -%>
+<% end -%>
+## Статусы
+
+| Provider | Space Payments |
+|---|---|
+<% statuses.each do |provider_status, space_status| -%>
+| `<%= provider_status %>` | `<%= space_status %>` |
+<% end -%>
+
+## Ошибки провайдера
+
+| HTTP | Provider response |
+|---:|---|
+<% errors.each do |error| -%>
+| <%= error[:code] %> | <%= error[:description] %> |
+<% end -%>
+
+<% webhook_operations.each do |webhook| -%>
+## Webhook: `<%= webhook[:path] %>`
+
+<%= webhook[:description] || webhook[:summary] %>
+
+<% if webhook[:request] -%>
+| Field | Required | Type | Description | Example |
+|---|---:|---|---|---|
+<% webhook[:request][:fields].each do |field| -%>
+| `<%= field[:name] %>` | <%= field[:required] %> | <%= field[:type] %> | <%= field[:description] %> | <%= field[:example] %> |
+<% end -%>
+<% end -%>
+
+<% end -%>
+## ProviderGateway config
+
+```json
+{
+  "external_method": "<%= snake_case(@integration_name) %>_payout",
+  "gateway": "RUB_<%= snake_case(@integration_name).upcase %>_WITHDRAW"
+}
+```
