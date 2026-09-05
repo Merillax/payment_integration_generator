@@ -4,22 +4,21 @@ module PaymentIntegrationGenerator
   class BaseSearcher
     def initialize(document:)
       @document = document
-      @search_matcher = nil
+      @expected_result = nil
+      @expected_score = 0
     end
 
     # @return <Array> returns uri and path_item of create_request method
     def call
-      @document.paths.find do |uri, path|
-        search_matcher.call(uri, path)
-      end
+      return @expected_result unless
+      @document.paths.each { |uri, path| calculate_expected_result(uri, path) }
+      @expected_result
     end
 
     private
 
-    def search_matcher
-      raise NotImplementedError if @search_matcher.nil?
-
-      @search_matcher
+    def calculate_expected_result
+      raise NotImplementedError
     end
   end
 end
