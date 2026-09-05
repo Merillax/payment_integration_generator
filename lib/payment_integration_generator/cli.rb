@@ -22,9 +22,21 @@ module PaymentIntegrationGenerator
 
       document = OpenApiParser.new(file_path: options[:file], url: options[:url])
                               .parse
-
+      
       # TODO: run integration generator
       PaymentIntegrationGenerator::IntegrationGenerator.new(
+        openapi_document: document,
+        integration_name: integration_name,
+      # output_folder_path: options[:output_folder]
+        ).call
+
+      Generators::DocumentationGenerator.new(
+        openapi_document: document,
+        integration_name: integration_name,
+        # output_folder_path: options[:output_folder]
+      ).call
+
+      Generators::FixturesGenerator.new(
         openapi_document: document,
         integration_name: integration_name,
         # output_folder_path: options[:output_folder]
