@@ -18,17 +18,39 @@ module PaymentIntegrationGenerator
         integration_name = integration_name.split(/[_\-\s]+/).map(&:capitalize).join
       end
 
-      puts "Generating #{integration_name} integration based on OpenAPI specification..."
-
       document = OpenApiParser.new(file_path: options[:file], url: options[:url])
                               .parse
       
       # TODO: run integration generator
-      PaymentIntegrationGenerator::IntegrationGenerator.new(
+      integration_generator = PaymentIntegrationGenerator::IntegrationGenerator.new(
         openapi_document: document,
         integration_name: integration_name,
       # output_folder_path: options[:output_folder]
-        ).call
+      )
+      puts "--------------------------------"
+      puts "-----INITIALIZING SEARCHERS-----"
+      puts "--------------------------------"
+
+      integration_generator.initialize_searchers
+      integration_generator.available_searchers.each do |searcher|
+        uri, path_item = integration_generator.send(searcher).search_result
+        puts "#{searcher} result: \n uri:  #{uri} \n\n"
+
+        while true
+          pattern = ask("Type 'YES', if result is correct, or search pattern as format 'method uri'. For example 'post /payouts'")
+          break if pattern == 'YES'
+          
+          begin
+            integration_generator.send(searcher).complete_pattern_search(pattern)
+            break
+          rescue ArgumentError => e
+            puts e
+          end
+        end
+      end
+      puts "Generating #{integration_name} integration based on OpenAPI specification..."
+
+      integration_generator.call
 
       Generators::DocumentationGenerator.new(
         openapi_document: document,

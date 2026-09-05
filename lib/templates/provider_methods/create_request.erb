@@ -1,5 +1,5 @@
 def create_request(operation, request_method = 'create')
-<%- uri, path_item = searcher.call -%>
+<%- uri, path_item = searcher.search_result -%>
   payload = build_payout_payload(operation)
   response = client.post("#{BASE_URL}<%= uri %>", json: payload, headers: auth_headers)
   parse_create_response(operation, response)

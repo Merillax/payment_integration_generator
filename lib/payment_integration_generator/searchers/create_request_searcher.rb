@@ -18,7 +18,17 @@ module PaymentIntegrationGenerator
       super(document: document)
     end
 
-    def calculate_expected_result(uri, path_item)
+    def complete_pattern_search(pattern)
+      method, endpoint = pattern.split(' ')
+
+      unless @document.paths[endpoint]&.post
+        raise ArgumentError, "Метод #{method} ендпойнта #{endpoint} не найден!"
+      end
+      
+      @pattern_search_result = [endpoint, @document.paths[endpoint]]    
+    end
+
+    def calculate_automatic_search_result(uri, path_item)
       return {} unless path_item.post
       return {} if uri.include?("{")
 
@@ -42,7 +52,7 @@ module PaymentIntegrationGenerator
 
       if score > @expected_score
         @expected_score = score
-        @expected_result = [uri, path_item]
+        @automatic_search_result = [uri, path_item]
       end
     end
 

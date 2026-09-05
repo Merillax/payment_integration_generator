@@ -11,12 +11,17 @@ module PaymentIntegrationGenerator
     PROVIDER_PRIVATE_METHODS = %i[build_payout_payload errors_mapping status_mapping].freeze
 
     SEARCHERS = %i[create_request_searcher fetch_status_searcher process_callback_searcher check_conditions_searcher]
-
+    SEARCHERS_TO_INITIALIZE = %i[create_request_searcher]
     def initialize(openapi_document:, integration_name:, output_folder_path: nil)
       super(openapi_document:, integration_name:, output_folder_path:)
     end
 
     def call
+      # TODO: create output folder if doesn't exist
+      generate_integration_class
+    end
+
+    def initialize_searchers
       SEARCHERS.each do |searcher|
         camelized_name = camelize(searcher.to_s)
         searcher_class = PaymentIntegrationGenerator.const_get(camelized_name)
@@ -26,8 +31,13 @@ module PaymentIntegrationGenerator
         end
       end
 
-      # TODO: create output folder if doesn't exist
-      generate_integration_class
+      SEARCHERS_TO_INITIALIZE.each do |searcher|
+        send(searcher).automatic_search_result
+      end
+    end
+
+    def available_searchers
+      SEARCHERS_TO_INITIALIZE
     end
 
     private
