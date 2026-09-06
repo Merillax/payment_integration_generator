@@ -81,7 +81,7 @@ module PaymentIntegrationGenerator
 
     # @return [String] generated payload method source
     def build_payload_method_source
-      return PayloadBuilderGenerator.new(mapping: payload_mapping).call unless @create_request_searcher.todo_option
+      return PayloadBuilder.new(mapping: payload_mapping).call unless @create_request_searcher.todo_option
 
       <<~RUBY.chomp
         def build_payout_payload(operation)
