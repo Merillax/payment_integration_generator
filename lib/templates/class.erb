@@ -9,7 +9,7 @@ class Provider
     private
 
   <%- PROVIDER_PRIVATE_METHODS.each do |method| -%>
-    <%= render_partial "provider_methods/#{method}", { document: @openapi_document } %>
+    <%= render_partial "provider_methods/#{method}", { document: @openapi_document, payload_method_source: method == :build_payout_payload ? payload_method_source : nil } %>
   <%- end -%>
   end
 end

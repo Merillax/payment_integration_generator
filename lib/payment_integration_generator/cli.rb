@@ -29,6 +29,7 @@ module PaymentIntegrationGenerator
       integration_generator = PaymentIntegrationGenerator::IntegrationGenerator.new(
         openapi_document: document,
         integration_name: integration_name,
+        payload_mapping_resolver: payload_mapping_resolver_class,
         output_folder_path: options[:output_folder]
       )
       puts "--------------------------------"
@@ -83,14 +84,34 @@ module PaymentIntegrationGenerator
       exit 1
     end
 
-    def handle_manually_user_input(pattern, integration_generator, searcher)
-      while true
-        begin
-          integration_generator.send(searcher).complete_pattern_search(pattern)
-          break
-        rescue ArgumentError => e
-          puts e
-          pattern = ask("Please retype search pattern as format 'method uri', For example 'post /payouts'.\n")
+    no_commands do
+      def payload_mapping_resolver_class
+        resolver_path = options[:payload_mapping_resolver]
+        return PayloadMappingResolver unless resolver_path
+
+        absolute_path = File.expand_path(resolver_path)
+        raise "Resolver file #{absolute_path} does not exist" unless File.file?(absolute_path)
+
+        class_name = File.basename(absolute_path, ".rb").split(/[_\-\s]+/).map(&:capitalize).join
+        require absolute_path
+
+        resolver = Object.const_get(class_name)
+        return resolver if resolver <= PayloadMappingResolver
+
+        raise ArgumentError, "#{class_name} must inherit from PayloadMappingResolver"
+      rescue NameError
+        raise NameError, "Could not find #{class_name} in #{absolute_path}"
+      end
+
+      def handle_manually_user_input(pattern, integration_generator, searcher)
+        while true
+          begin
+            integration_generator.send(searcher).complete_pattern_search(pattern)
+            break
+          rescue ArgumentError => e
+            puts e
+            pattern = ask("Please retype search pattern as format 'method uri', For example 'post /payouts'.\n")
+          end
         end
       end
     end
