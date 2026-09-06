@@ -3,7 +3,7 @@ class Provider
     BASE_URL = ENV.fetch('<%= @integration_name.upcase %>_BASE_URL', '<%= provider_default_url %>')
 
   <%- PROVIDER_PUBLIC_METHODS.each do |method| -%>
-    <%= render_partial "provider_methods/#{method}", { document: @openapi_document } %>
+    <%= render_partial "provider_methods/#{method}", { document: @openapi_document, searcher: send("#{method}_searcher"), payload_schema: payload_schema } %>
   <%- end -%>
 
     private

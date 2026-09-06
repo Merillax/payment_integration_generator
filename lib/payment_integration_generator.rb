@@ -16,6 +16,12 @@ require_relative "payment_integration_generator/generators/documentation_generat
 require_relative "payment_integration_generator/generators/fixtures_generator"
 require_relative "payment_integration_generator/searchers/base_searcher"
 require_relative "payment_integration_generator/searchers/create_request_searcher"
+require_relative "payment_integration_generator/searchers/fetch_status_searcher"
+require_relative "payment_integration_generator/searchers/process_callback_searcher"
+require_relative "payment_integration_generator/searchers/check_conditions_searcher"
+require_relative "payment_integration_generator/mappers/check_conditions_mapper"
+
+
 require_relative "payment_integration_generator/cli"
 
 module PaymentIntegrationGenerator

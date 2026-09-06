@@ -1,5 +1,9 @@
 def create_request(operation, request_method = 'create')
-<%- uri, path_item = PaymentIntegrationGenerator::CreateRequestSearcher.new(document:).call -%>
+<%- uri, path_item = searcher.search_result -%>
+<%- if searcher.todo_option -%>
+  # TODO: не удалось однозначно определить эндпоинт создания выплаты в спеке — настройте вручную
+  raise NotImplementedError, "create_request не реализован: эндпоинт не найден автоматически"
+<%- else -%>
   payload = build_payout_payload(operation)
   response = client.post("#{BASE_URL}<%= uri %>", json: payload, headers: auth_headers)
   parse_create_response(operation, response)
@@ -7,4 +11,5 @@ rescue Provider::RateLimitError
   failure(:too_many_requests, 'provider.rate_limit')
 rescue Provider::UnauthorizedError
   failure(:unauthorized, 'provider.invalid_credentials')
+<%- end -%>
 end

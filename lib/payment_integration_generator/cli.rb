@@ -18,17 +18,48 @@ module PaymentIntegrationGenerator
         integration_name = integration_name.split(/[_\-\s]+/).map(&:capitalize).join
       end
 
-      puts "Generating #{integration_name} integration based on OpenAPI specification..."
-
       document = OpenApiParser.new(file_path: options[:file], url: options[:url])
                               .parse
       
       # TODO: run integration generator
-      PaymentIntegrationGenerator::IntegrationGenerator.new(
+      integration_generator = PaymentIntegrationGenerator::IntegrationGenerator.new(
         openapi_document: document,
         integration_name: integration_name,
       # output_folder_path: options[:output_folder]
-        ).call
+      )
+      puts "--------------------------------"
+      puts "-----INITIALIZING SEARCHERS-----"
+      puts "--------------------------------"
+
+      integration_generator.initialize_searchers
+      integration_generator.available_searchers.each do |searcher|
+        uri, path_item = integration_generator.send(searcher).search_result
+        puts ''
+        puts "#{searcher} result: \n uri:  #{uri} \n\n"
+
+        message = <<~TEXT
+          Options to type:
+          1) 'YES', if result is correct;
+          2) 'ToDo', if you want to do it manually later;
+          3) Search pattern as format 'method uri', if result if not correct. For example 'post /payouts'.
+        TEXT
+        puts message
+        
+        pattern = ask('')
+        case pattern
+        when "YES" then next
+        when "ToDo" then integration_generator.send(searcher).enable_todo_option
+        else 
+          handle_manually_user_input(pattern, integration_generator, searcher)
+        end
+      end
+      puts "--------------------------------"
+      puts "--INITIALIZING SEARCHERS_ENDS---"
+      puts "--------------------------------"
+
+      puts "Generating #{integration_name} integration based on OpenAPI specification..."
+
+      integration_generator.call
 
       Generators::DocumentationGenerator.new(
         openapi_document: document,
@@ -46,6 +77,18 @@ module PaymentIntegrationGenerator
     rescue StandardError => e
       puts "Error: #{e.message}. Backtrace: #{e.backtrace}"
       exit 1
+    end
+
+    def handle_manually_user_input(pattern, integration_generator, searcher)
+      while true
+        begin
+          integration_generator.send(searcher).complete_pattern_search(pattern)
+          break
+        rescue ArgumentError => e
+          puts e
+          pattern = ask("Please retype search pattern as format 'method uri', For example 'post /payouts'.\n")
+        end
+      end
     end
   end
 end
