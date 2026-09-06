@@ -63,8 +63,8 @@ module PaymentIntegrationGenerator
       all_errors = []
       METHODS_TO_GENERATE_EXCEPTIONS_BLOCK.each do |method_name|
         next unless self.class.method_defined?("#{method_name}_searcher".to_sym)
-        error_generator_data = PaymentIntegrationGenerator::ErrorBlockGenerator.call(send("#{method_name}_searcher".to_sym).search_result[1])
-        all_errors << error_generator_data
+        error_generator_data = PaymentIntegrationGenerator::ErrorBlockGenerator.call(send("#{method_name}_searcher".to_sym).search_result&.[](1))
+        all_errors << error_generator_data unless error_generator_data.nil?
         self.class.define_method("#{method_name.to_s}_exceptions_block".to_sym) do
           error_generator_data
         end
