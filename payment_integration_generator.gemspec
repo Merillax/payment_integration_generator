@@ -7,14 +7,14 @@ Gem::Specification.new do |spec|
   spec.version = PaymentIntegrationGenerator::VERSION
   spec.authors = ["test"]
 
-  spec.summary = "TODO: Write a short summary, because RubyGems requires one."
-  spec.description = "TODO: Write a longer description or delete this line."
-  spec.homepage = "TODO: Put your gem's website or public repo URL here."
+  spec.summary = "Payment integration generator"
+  spec.description = "Payment integration generator"
+  spec.homepage = "https://github.com/Merillax/payment_integration_generator"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
   spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
+  spec.metadata["source_code_uri"] = "https://github.com/Merillax/payment_integration_generator"
 
   # Uncomment the line below to require MFA for gem pushes.
   # This helps protect your gem from supply chain attacks by ensuring
@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
     end
   end
   spec.bindir = "exe"
-  spec.executables   = ["payment_integration"]
+  spec.executables   = ["payment_integration_generator"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "openapi3_parser", "~> 0.10.1"

@@ -1,6 +1,6 @@
 # Payment Integration Generator
 
-Библиотека для генерации интеграций с платёжными провайдерами. Она создаёт начальную структуру платёжной интеграции на основе переданной
+Библиотека для генерации интеграций с платёжными провайдерами. Она создаёт структуру платёжной интеграции на основе переданной
 OpenAPI-спецификации.
 
 Библиотека работает через CLI.
@@ -18,27 +18,51 @@ OpenAPI-спецификации.
 bundle install
 ```
 
+Далее необходимо выполнить сборку и установку gem'а, чтобы использовать его в системе. Для этого на системе с установленным Ruby >3.2 необходимо выполнить:
+```shell
+gem build payment_integration_generator.gemspec
+```
+
+Будет получен файл формата `payment_integration_generator-1.0.0.gem`. Необходимо установить локально собранный gem:
+```shell
+gem install payment_integration_generator-1.0.0.gem
+```
+
+После чего в системе можно будет обращаться к утилите:
+```shell
+payment_integration_generator generate NovaPay --file payment_integration_generator/lib/configs_examples/provider_api.yaml --output_folder /path
+```
+
+Так же собранный gem может быть опубликован в хранилище артефактов и устанавливаться пользователями с использованием Gemfile
+
 ## Использование через командную строку
 
 ```shell
-bundle exec exe/payment_integration_generator generate ИМЯ_ИНТЕГРАЦИИ [ОПЦИИ]
+payment_integration_generator generate ИМЯ_ИНТЕГРАЦИИ [ОПЦИИ]
 ```
 
 Для локального файла:
 
 ```shell
-bundle exec exe/payment_integration_generator generate TestIntegration \
+payment_integration_generator generate Test \
   --file /path/to/openapi.yaml
 ```
 
 Для спецификации по URL:
 
 ```shell
-bundle exec exe/payment_integration_generator generate TestIntegration \
+payment_integration_generator generate Test \
   --url https://example.com/openapi.yaml
 ```
 
 Необходимо указать ровно один из параметров: `--file` или `--url`.
+
+*Так же допустим запуск утилиты без предварительной установки из директории с исходным кодом gem'а:*
+```shell
+bundle exec exe/payment_integration_generator generate Test \
+  --file /path/to/openapi.yaml \
+  --output_folder /path
+```
 
 ### Параметры командной строки
 
@@ -178,3 +202,11 @@ Error: --file or --url must be specified
 bundle exec exe/payment_integration_generator help
 bundle exec exe/payment_integration_generator help generate
 ```
+
+## Расширение функционала
+
+Если потребуется расширить функционал gem'а - например, добавить генерацию новый метод в итоговый класс-клиент, то необходимо:
+- Добавить имя метода в `PaymentIntegrationGenerator::IntegrationGenerator::PROVIDER_PUBLIC_METHODS` или `PaymentIntegrationGenerator::IntegrationGenerator::PROVIDER_PRIVATE_METHODS`
+- Создать шаблон в `lib/templates/provider_methods` с соответсвующим методу именем
+- При необходимости создать серчер в `lib/payment_integration_generator/searchers` и указать в нём правила поиска ендпоинта в спецификации OpenAPI
+- Так же добавить новый сёрчер в `PaymentIntegrationGenerator::IntegrationGenerator::SEARCHERS` и `PaymentIntegrationGenerator::IntegrationGenerator::SEARCHERS_TO_INITIALIZE`
