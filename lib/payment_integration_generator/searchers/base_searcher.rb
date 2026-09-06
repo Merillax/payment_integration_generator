@@ -8,6 +8,7 @@ module PaymentIntegrationGenerator
       @pattern_search_result = nil
       @search_result = nil
       @expected_score = 0
+      @todo_option = false
     end
 
     def automatic_search_result
@@ -24,6 +25,7 @@ module PaymentIntegrationGenerator
     end
 
     def search_result
+      return nil if todo_option
       return @automatic_search_result if @pattern_search_result.nil?
 
       @pattern_search_result
@@ -32,6 +34,14 @@ module PaymentIntegrationGenerator
     # Релизовать этот метод в серчере откуда будет браться схема payload. Добавить этот серчер в константу IntegrationGenerator
     def payload_schema
       raise NotImplementedError
+    end
+
+    def enable_todo_option
+      @todo_option = true
+    end
+
+    def todo_option
+      @todo_option
     end
 
     private

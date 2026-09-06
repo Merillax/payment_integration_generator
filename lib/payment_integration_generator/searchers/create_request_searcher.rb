@@ -34,6 +34,8 @@ module PaymentIntegrationGenerator
 
 
     def payload_schema
+      return nil if todo_option
+
       _, path_item = @pattern_search_result || @automatic_search_result
       return nil unless path_item
 
