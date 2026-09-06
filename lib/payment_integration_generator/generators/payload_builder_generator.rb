@@ -2,10 +2,12 @@
 
 module PaymentIntegrationGenerator
   class PayloadBuilderGenerator
+    # @param mapping [Array<Hash>] payload mapping produced by PayloadMappingResolver
     def initialize(mapping:)
       @mapping = mapping
     end
 
+    # @return [String] generated build_payout_payload method source
     def call
       [
         "# To customize field mappings, override PayloadMappingResolver#mapping_rules.",
@@ -20,12 +22,19 @@ module PaymentIntegrationGenerator
 
     private
 
+    # @param fields [Array<Hash>] fields to render
+    # @param indent [Integer] indentation size
+    # @return [String] rendered Ruby hash fields
     def render_fields(fields, indent)
       fields.each_with_index.map do |field, index|
         render_field(field, indent, comma: index < fields.length - 1)
       end.join("\n")
     end
 
+    # @param field [Hash] field to render
+    # @param indent [Integer] indentation size
+    # @param comma [Boolean] whether to append a comma
+    # @return [String] rendered Ruby field
     def render_field(field, indent, comma:)
       prefix = " " * indent
       key = ruby_key(field.fetch(:name))
@@ -40,6 +49,8 @@ module PaymentIntegrationGenerator
       end
     end
 
+    # @param name [String] field name
+    # @return [String] Ruby hash key
     def ruby_key(name)
       name.match?(/\A[A-Za-z_]\w*\z/) ? "#{name}:" : "#{name.inspect} =>"
     end
