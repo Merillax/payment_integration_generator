@@ -5,6 +5,6 @@ def fetch_status(operation)
   raise NotImplementedError, "fetch_status не реализован: эндпоинт не найден автоматически"
 <%- else -%>
   response = client.get("#{BASE_URL}<%= uri.gsub(/\{.*?\}/, '#{operation.provider_operation_id}') %>")
-  map_status(response.body['<%= searcher.status_field(path_item)&[:name] || "TODO: Set field name" %>'])
+  map_status(response.body['<%= searcher.status_field(path_item)&.[](:name) || "TODO: укажите имя поля" %>'])
 <%- end -%>
 end
