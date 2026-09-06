@@ -1,49 +1,24 @@
 # Payment Integration Generator
 
-Gem для генерации класса интеграции на основе спецификации OpenAPI >=3.0
-Ruby (>3.0)
+Библиотека для генерации интеграций с платёжными провайдерами. Она создаёт структуру платёжной интеграции на основе переданной
+OpenAPI-спецификации.
 
-## Принцип работы
+Библиотека работает через CLI.
+В результате генерируются Ruby-сервис интеграции `example_service.rb`, документация `INTEGRATION.md`, fixtures `fixtures.json`.
 
-В коде gem'а имеется набор **генераторов** (`lib/payment_integration_generator/generators/`), каждый из которых отвечает за генерацию конкретного итогового файла (`client_service.rb`, `INTEGRATION.md`, `fixtures.json`) 
+## Требования
 
-Генерация итоговых файлов происходит при помощи **erb шаблонов** (`lib/templates`):
- - `lib/templates/class.erb` - отвечает за формирование самого файла класса-интеграции
- - `lib/templates/integration_md.erb` - отвечает за формирование файла документации
+- Ruby 3.2 или новее;
+- OpenAPI 3-спецификация в формате YAML или JSON;
+- Bundler.
 
-*файл фикстур (`fixtures.json`) формируется исключительно в рамках генератора `lib/payment_integration_generator/generators/fixtures_generator.rb` без использования шаблонов*
+## Установка
 
-Поиск необходимых ендпоинтов для методов класса-интеграции происходит в соответсвующих **серчерах** (`lib/payment_integration_generator/searchers/`). Прицип поиска построен следующим образом:
- - Серчер проходит по каждому ендпоинту
- - По текстовому поиску на основе ключевых слов определяет релевантность ендпоинта, назначая ему **рейтинг релевантности** по количеству вхождения ключевых слов в различные части спецификации, относящейся к данному ендпоинту
- - Затем выбирается ендпоинт с самым высоким рейтингом, который передается на согласование пользователю
- - Пользователь выбирает одну из трех опций:
-   - `YES` - выполнить генерацию с данным ендпоинтом
-   - `ToDO` - пропустить генерацию метода и заполнить её в дальнейшем вручную
-   - указать определенный ендпоинт в формате `method /endpoint` (пример `post /payment`)
- - После выбора опции утилита переходит к генерации следующего метода или завершает свою работу
-
-## Расширение функционала
-
-Таким образом, если потребуется расширить функционал gem'а - например, добавить генерацию новый метод в итоговый класс-клиент, то необходимо:
- - Добавить имя метода в `PaymentIntegrationGenerator::IntegrationGenerator::PROVIDER_PUBLIC_METHODS` или `PaymentIntegrationGenerator::IntegrationGenerator::PROVIDER_PRIVATE_METHODS`
- - Создать шаблон в `lib/templates/provider_methods` с соответсвующим методу именем
- - При необходимости создать серчер в `lib/payment_integration_generator/searchers` и указать в нём правила поиска ендпоинта в спецификации OpenAPI
- - Так же добавить новый сёрчер в `PaymentIntegrationGenerator::IntegrationGenerator::SEARCHERS` и `PaymentIntegrationGenerator::IntegrationGenerator::SEARCHERS_TO_INITIALIZE`
-
-## Запуск CLI-утилиты
-
-Первоначально установить зависимости gem'а:
 ```shell
 bundle install
 ```
 
-Далее можно выполнять запуск утилиты:
-```shell
-bundle exec exe/payment_integration_generator generate NovaPay --file payment_integration_generator/lib/configs_examples/provider_api.yaml --output_folder /path
-```
-
-Так же возможно выполнить сборку и установку gem'а, чтобы использовать его в системе. Для этого на системе с установленным Ruby >3.0 необходимо выполнить:
+Далее необходимо выполнить сборку и установку gem'а, чтобы использовать его в системе. Для этого на системе с установленным Ruby >3.2 необходимо выполнить:
 ```
 gem build payment_integration_generator.gemspec
 ```
@@ -59,3 +34,172 @@ payment_integration_generator generate NovaPay --file payment_integration_genera
 ```
 
 Так же собранный gem может быть опубликован в хранилище артефактов и устанавливаться пользователями с использованием Gemfile
+
+## Использование через командную строку
+
+```shell
+payment_integration_generator generate ИМЯ_ИНТЕГРАЦИИ [ОПЦИИ]
+```
+
+Для локального файла:
+
+```shell
+payment_integration_generator generate TestIntegration \
+  --file /path/to/openapi.yaml
+```
+
+Для спецификации по URL:
+
+```shell
+payment_integration_generator generate TestIntegration \
+  --url https://example.com/openapi.yaml
+```
+
+Необходимо указать ровно один из параметров: `--file` или `--url`.
+
+### Параметры командной строки
+
+| Параметр | Короткая форма | Назначение |
+| --- | --- | --- |
+| `--file PATH` | `-f` | Прочитать OpenAPI-спецификацию из локального файла. |
+| `--url URL` | `-u` | Прочитать OpenAPI-спецификацию по URL. |
+| `--output-folder PATH` | `-o` | Сохранить все сгенерированные файлы в указанную директорию. |
+| `--payload-mapping-resolver PATH` | `-r` | Загрузить пользовательский resolver маппинга из Ruby-файла. |
+
+Имя интеграции указывается как обязательный позиционный параметр. Имена в
+snake_case и kebab-case по возможности преобразуются в PascalCase.
+
+### Интерактивный выбор операций
+
+Для каждой операции генератор показывает автоматически (методов весов) найденный вариант и
+просит его подтвердить. Можно ввести:
+
+- `YES` — принять найденную операцию;
+- `ToDo` — оставить операцию для ручной реализации;
+- `method path` — выполнить поиск по другому методу и пути, например `post /payouts`. (если пользователь знает какой метод ему нужен)
+
+## Сгенерированные файлы
+
+По умолчанию файлы сохраняются в:
+
+```text
+lib/integrations/<integration_name>_service.rb
+lib/integrations/INTEGRATION.md
+lib/integrations/fixtures.json
+```
+
+Директорию можно изменить с помощью `--output-folder`.
+
+## Генерация payload
+
+`PayloadMappingResolver` сопоставляет поля схемы запроса с со значения из `operation`. `PayloadBuilderGenerator` использует
+этот маппинг для генерации `build_payout_payload`.
+
+Например, поле `Amount` может быть сгенерировано так:
+
+```ruby
+Amount: (operation.amount * 100).to_i
+```
+
+Перед сопоставлением имена полей нормализуются. Регистр, подчёркивания и дефисы
+не учитываются, поэтому `Amount`, `amount` и `AMOUNT` считаются одним полем.
+Для вложенных полей сначала проверяется полный путь.
+
+Если правило не найдено, поле сохраняется в payload и помечается для проверки:
+
+```ruby
+OrderId: nil # TODO: no matching mapping rule for OrderId
+```
+
+Сгенерированный код остаётся валидным Ruby и может быть дополнен вручную.
+
+## Пользовательские правила маппинга
+
+Создайте наследника resolver’а и переопределите `mapping_rules`. Используйте
+`super.merge`, чтобы сохранить стандартные правила и добавить правила
+конкретного провайдера:
+
+```ruby
+class TbankPayloadMappingResolver < PaymentIntegrationGenerator::PayloadMappingResolver
+  def mapping_rules
+    super.merge(
+      "PaymentId" => "operation.id",
+      "InfoEmail" => "operation.email",
+      "DATA.threeDSCompInd" => "'Y'"
+    )
+  end
+end
+```
+
+### Пользовательский resolver через CLI
+
+Сохраните класс в файле, имя которого соответствует имени класса в snake_case.
+Например, файл `tbank_payload_mapping_resolver.rb` должен содержать класс
+`TbankPayloadMappingResolver`.
+
+```shell
+bundle exec exe/payment_integration_generator generate Tbank \
+  --file /path/to/openapi.yaml \
+  --payload-mapping-resolver /path/to/tbank_payload_mapping_resolver.rb
+```
+
+Пользовательский класс должен наследоваться от
+`PaymentIntegrationGenerator::PayloadMappingResolver`.
+
+Если пользовательский resolver не передан, используется стандартный
+`PayloadMappingResolver`.
+
+## Ручная настройка операций
+
+Вариант `ToDo` можно выбрать для любой операции, которую генератор предлагает
+подтвердить: `create_request`, `fetch_status` или `process_callback`. Это
+означает, что автоматически найденную операцию нельзя использовать без
+ручной проверки и настройки соответствующей части интеграции.
+
+Для `create_request` дополнительно становится неизвестной схема тела запроса.
+В этом случае генератор не строит payload автоматически, а создаёт заготовку:
+
+```ruby
+def build_payout_payload(operation)
+  # TODO: implement payload mapping manually
+  {}
+end
+```
+
+Для `fetch_status` и `process_callback` необходимо вручную проверить выбранный
+endpoint, параметры запроса, формат ответа и callback payload.
+
+В сгенерированный метод также добавляются подсказки:
+
+```ruby
+# To customize field mappings, override PayloadMappingResolver#mapping_rules.
+# Review fields marked with TODO before using this integration.
+```
+
+## Сообщения CLI
+
+Информационные сообщения, предупреждения и ошибки CLI выводятся на английском
+языке. Например:
+
+```text
+Generating TestIntegration integration based on OpenAPI specification...
+Done!
+Error: --file or --url must be specified
+```
+
+Сообщения об ошибках OpenAPI-спецификации также выводятся на английском языке.
+
+## Справка
+
+```shell
+bundle exec exe/payment_integration_generator help
+bundle exec exe/payment_integration_generator help generate
+```
+
+## Расширение функционала
+
+Если потребуется расширить функционал gem'а - например, добавить генерацию новый метод в итоговый класс-клиент, то необходимо:
+- Добавить имя метода в `PaymentIntegrationGenerator::IntegrationGenerator::PROVIDER_PUBLIC_METHODS` или `PaymentIntegrationGenerator::IntegrationGenerator::PROVIDER_PRIVATE_METHODS`
+- Создать шаблон в `lib/templates/provider_methods` с соответсвующим методу именем
+- При необходимости создать серчер в `lib/payment_integration_generator/searchers` и указать в нём правила поиска ендпоинта в спецификации OpenAPI
+- Так же добавить новый сёрчер в `PaymentIntegrationGenerator::IntegrationGenerator::SEARCHERS` и `PaymentIntegrationGenerator::IntegrationGenerator::SEARCHERS_TO_INITIALIZE`
