@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "openapi3_parser", "~> 0.10.1"
+  spec.add_dependency "ostruct"
   spec.add_dependency "thor"
 
   spec.add_development_dependency "bundler"
