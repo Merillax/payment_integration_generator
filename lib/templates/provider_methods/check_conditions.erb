@@ -6,7 +6,37 @@ def check_conditions(operation, request_method)
   base_result = super
   return base_result if base_result.failed?
 
-  return failure(:unprocessable_entity, 'amount_too_low') if operation.amount < 1000
+  payload = build_payout_payload(operation)
+<%- schema_conditions = PaymentIntegrationGenerator::CheckConditionsMapper.call(payload_schema) -%>
+  conditions = {
+<%- schema_conditions.each_with_index do |(path, rules), index| -%>
+    <%= path.inspect %> => { min: <%= rules[:min].inspect %>, max: <%= rules[:max].inspect %>, enum: <%= rules[:enum].inspect %> }<%= "," unless index == schema_conditions.length - 1 %>
+<%- end -%>
+  }
+
+  # Поддерживаем строковые и символьные ключи: маппинг payload может использовать оба варианта.
+  fetch_values = lambda do |object, path|
+    path.split(".").reduce([object]) do |objects, part|
+      array = part.end_with?("[]")
+      key = array ? part.delete_suffix("[]") : part
+      values = objects.filter_map do |current|
+        next unless current.respond_to?(:key?)
+
+        current.key?(key) ? current[key] : current[key.to_sym]
+      end
+      array ? values.flat_map { |value| value.is_a?(Array) ? value : [] } : values
+    end
+  end
+
+  conditions.each do |path, rules|
+    fetch_values.call(payload, path).each do |value|
+      error_key = path.gsub(/\[\]|\./, "_")
+      return failure(:unprocessable_entity, "#{error_key}_too_low") if rules[:min] && value < rules[:min]
+      return failure(:unprocessable_entity, "#{error_key}_too_high") if rules[:max] && value > rules[:max]
+      return failure(:unprocessable_entity, "invalid_#{error_key}") if rules[:enum] && !rules[:enum].include?(value)
+    end
+  end
+
   success
 <%- end -%>
 end

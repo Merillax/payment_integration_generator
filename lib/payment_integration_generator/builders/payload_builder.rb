@@ -10,8 +10,8 @@ module PaymentIntegrationGenerator
     # @return [String] исходный код сгенерированного метода build_payout_payload
     def call
       [
-        "# To customize field mappings, override PayloadMappingResolver#mapping_rules.",
-        "# Review fields marked with TODO before using this integration.",
+        "# Чтобы изменить маппинг полей, переопределите PayloadMappingResolver#mapping_rules.",
+        "# Перед использованием интеграции проверьте поля, отмеченные TODO.",
         "def build_payout_payload(operation)",
         "  {",
         render_fields(@mapping, 4),
@@ -44,7 +44,7 @@ module PaymentIntegrationGenerator
         "#{prefix}#{key} {\n#{render_fields(field.fetch(:children), indent + 2)}\n#{prefix}}#{suffix}"
       else
         separator = comma ? "," : ""
-        todo = field[:todo] ? " # TODO: no matching mapping rule for #{field.fetch(:path)}" : ""
+        todo = field[:todo] ? " # TODO: не найдено правило маппинга для #{field.fetch(:path)}" : ""
         "#{prefix}#{key} #{field.fetch(:expression)}#{separator}#{todo}"
       end
     end

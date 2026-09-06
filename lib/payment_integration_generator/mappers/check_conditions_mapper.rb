@@ -60,7 +60,7 @@ module PaymentIntegrationGenerator
       {
         min: property.minimum,
         max: property.maximum,
-        enum: property.enum
+        enum: property.enum&.to_a
       }
     end
 

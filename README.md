@@ -115,7 +115,7 @@ Amount: (operation.amount * 100).to_i
 Если правило не найдено, поле сохраняется в payload и помечается для проверки:
 
 ```ruby
-OrderId: nil # TODO: no matching mapping rule for OrderId
+OrderId: nil # TODO: не найдено правило маппинга для OrderId
 ```
 
 Сгенерированный код остаётся валидным Ruby и может быть дополнен вручную.
@@ -179,8 +179,8 @@ endpoint, параметры запроса, формат ответа и callba
 В сгенерированный метод также добавляются подсказки:
 
 ```ruby
-# To customize field mappings, override PayloadMappingResolver#mapping_rules.
-# Review fields marked with TODO before using this integration.
+# Чтобы изменить маппинг полей, переопределите PayloadMappingResolver#mapping_rules.
+# Перед использованием интеграции проверьте поля, отмеченные TODO.
 ```
 
 ## Сообщения CLI
