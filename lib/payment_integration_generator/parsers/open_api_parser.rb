@@ -6,11 +6,15 @@
 module PaymentIntegrationGenerator
   class OpenApiParser
 
+    # @param url <String> адрес на OpenAPI спецификацию платежного сервиса
+    # @param file_path <String> путь до файла с OpenAPI спецификацией платежного сервиса
+    # @return <Void>
     def initialize(url: nil, file_path: nil)
       @url = url
       @file_path = file_path
     end
 
+    # @return <Openapi3Parser::Document> спаршенный документ OpenAPI спецификации
     def parse
       validate
 

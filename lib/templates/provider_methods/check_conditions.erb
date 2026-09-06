@@ -1,7 +1,12 @@
 def check_conditions(operation, request_method)
+<%- if searcher.todo_option -%>
+  # TODO: не удалось однозначно определить эндпоинт создания выплаты в спеке — настройте вручную
+  raise NotImplementedError, "check_conditions не реализован: эндпоинт не найден автоматически"
+<%- else -%>
   base_result = super
   return base_result if base_result.failed?
 
   return failure(:unprocessable_entity, 'amount_too_low') if operation.amount < 1000
   success
+<%- end -%>
 end
