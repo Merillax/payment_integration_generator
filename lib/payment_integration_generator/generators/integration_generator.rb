@@ -11,6 +11,8 @@ module PaymentIntegrationGenerator
     SEARCHERS = %i[create_request_searcher fetch_status_searcher process_callback_searcher check_conditions_searcher]
     SEARCHERS_TO_INITIALIZE = %i[create_request_searcher fetch_status_searcher process_callback_searcher]
     SEARCHER_FROM_TAKE_PAYLOAD_SCHEMA = :create_request_searcher
+    METHODS_TO_GENERATE_EXCEPTIONS_BLOCK = %i[create_request]
+
     # @param openapi_document [Openapi3Parser::Node::Document] parsed OpenAPI document
     # @param integration_name [String] generated integration name
     # @param output_folder_path [String, nil] generated files destination
@@ -23,10 +25,12 @@ module PaymentIntegrationGenerator
     )
       @payload_mapping_resolver = payload_mapping_resolver
       @searchers_initialized = false
+      @exception_block_initialized = false
       super(openapi_document:, integration_name:, output_folder_path:)
     end
 
     def call
+      initialize_methods_exceptions_blocks unless @exception_block_initialized
       initialize_searchers unless @searchers_initialized
 
       generate_integration_class
@@ -53,6 +57,23 @@ module PaymentIntegrationGenerator
       end
 
       @searchers_initialized = true
+    end
+
+    def initialize_methods_exceptions_blocks
+      all_errors = []
+      METHODS_TO_GENERATE_EXCEPTIONS_BLOCK.each do |method_name|
+        next unless self.class.method_defined?("#{method_name}_searcher".to_sym)
+        error_generator_data = PaymentIntegrationGenerator::ErrorBlockGenerator.call(send("#{method_name}_searcher".to_sym).search_result[1])
+        all_errors << error_generator_data
+        self.class.define_method("#{method_name.to_s}_exceptions_block".to_sym) do
+          error_generator_data
+        end
+      end
+
+      self.class.define_method(:errors_mapping_exceptions_block) do
+        PaymentIntegrationGenerator::ErrorBlockGenerator.combined_error_map(all_errors)
+      end
+      @exception_block_initialized = true
     end
 
     # @return <String> список доступных серчеров

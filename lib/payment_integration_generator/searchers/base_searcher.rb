@@ -44,6 +44,10 @@ module PaymentIntegrationGenerator
       @todo_option
     end
 
+    def todo_message
+      "TODO: не удалось однозначно определить эндпоинт создания выплаты в спеке — настройте вручную"
+    end
+
     private
 
     def calculate_automatic_search_result(uri, path_item)
