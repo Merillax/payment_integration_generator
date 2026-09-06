@@ -3,9 +3,9 @@
 module PaymentIntegrationGenerator
   module Generators
     class DocumentationGenerator < BaseGenerator
-      def initialize(openapi_document:, integration_name:, output_folder_path: nil)
-        super
-        @catalog = OpenApiOperationCatalog.new(document: openapi_document)
+      def initialize(openapi_document:, integration_name:, output_folder_path: nil, searchers:)
+        super(openapi_document:, integration_name:, output_folder_path:)
+        @catalog = OpenApiOperationCatalog.new(document: openapi_document, searchers: searchers)
       end
 
       def call
