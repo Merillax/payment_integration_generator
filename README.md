@@ -19,17 +19,17 @@ bundle install
 ```
 
 Далее необходимо выполнить сборку и установку gem'а, чтобы использовать его в системе. Для этого на системе с установленным Ruby >3.2 необходимо выполнить:
-```
+```shell
 gem build payment_integration_generator.gemspec
 ```
 
 Будет получен файл формата `payment_integration_generator-1.0.0.gem`. Необходимо установить локально собранный gem:
-```
+```shell
 gem install payment_integration_generator-1.0.0.gem
 ```
 
 После чего в системе можно будет обращаться к утилите:
-```
+```shell
 payment_integration_generator generate NovaPay --file payment_integration_generator/lib/configs_examples/provider_api.yaml --output_folder /path
 ```
 
@@ -44,18 +44,25 @@ payment_integration_generator generate ИМЯ_ИНТЕГРАЦИИ [ОПЦИИ]
 Для локального файла:
 
 ```shell
-payment_integration_generator generate TestIntegration \
+payment_integration_generator generate Test \
   --file /path/to/openapi.yaml
 ```
 
 Для спецификации по URL:
 
 ```shell
-payment_integration_generator generate TestIntegration \
+payment_integration_generator generate Test \
   --url https://example.com/openapi.yaml
 ```
 
 Необходимо указать ровно один из параметров: `--file` или `--url`.
+
+*Так же допустим запуск утилиты без предварительной установки из директории с исходным кодом gem'а:*
+```shell
+bundle exec exe/payment_integration_generator generate Test \
+  --file /path/to/openapi.yaml \
+  --output_folder /path
+```
 
 ### Параметры командной строки
 
