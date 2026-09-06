@@ -39,7 +39,7 @@ module PaymentIntegrationGenerator
       _, path_item = @pattern_search_result || @automatic_search_result
       return nil unless path_item
 
-      path_schema(path_item.post)
+      path_schema(path_item)
     end
 
     # Ручной способ указать конкретный эндпоинт напрямую, минуя автоматический поиск
@@ -52,7 +52,7 @@ module PaymentIntegrationGenerator
       unless @document.paths[endpoint]&.post
         raise ArgumentError, "Метод #{method} ендпойнта #{endpoint} не найден!"
       end
-      @pattern_search_result = [endpoint, @document.paths[endpoint]]
+      @pattern_search_result = [endpoint, @document.paths[endpoint].post]
     end
 
     # Считает score для конкретной пары (путь, path_item) как кандидата на роль "create_request"
@@ -82,7 +82,7 @@ module PaymentIntegrationGenerator
 
       if score > @expected_score
         @expected_score = score
-        @automatic_search_result = [uri, path_item]
+        @automatic_search_result = [uri, path_item.post]
       end
     end
 

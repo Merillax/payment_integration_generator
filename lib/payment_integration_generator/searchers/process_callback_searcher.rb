@@ -59,7 +59,7 @@ module PaymentIntegrationGenerator
         raise ArgumentError, "Метод #{method} ендпойнта #{endpoint} не найден!"
       end
 
-      @pattern_search_result = [endpoint, @document.paths[endpoint]]
+      @pattern_search_result = [endpoint, @document.paths[endpoint].post]
     end
 
     # Считает score для конкретной пары (путь, path_item) как кандидата на роль "process_callback"
@@ -88,7 +88,7 @@ module PaymentIntegrationGenerator
 
       if score > @expected_score
         @expected_score = score
-        @automatic_search_result = [uri, path_item]
+        @automatic_search_result = [uri, path_item.post]
       end
     end
 

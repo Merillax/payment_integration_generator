@@ -23,6 +23,9 @@ require_relative "payment_integration_generator/searchers/fetch_status_searcher"
 require_relative "payment_integration_generator/searchers/process_callback_searcher"
 require_relative "payment_integration_generator/searchers/check_conditions_searcher"
 require_relative "payment_integration_generator/mappers/check_conditions_mapper"
+require_relative "payment_integration_generator/mappers/error_mapper"
+require_relative "payment_integration_generator/parsers/error_status_parser"
+require_relative "payment_integration_generator/generators/integration_sub_generators/error_block_generator"
 
 
 require_relative "payment_integration_generator/cli"
