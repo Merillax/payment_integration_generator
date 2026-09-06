@@ -29,6 +29,11 @@ module PaymentIntegrationGenerator
       @pattern_search_result
     end
 
+    # Релизовать этот метод в серчере откуда будет браться схема payload. Добавить этот серчер в константу IntegrationGenerator
+    def payload_schema
+      raise NotImplementedError
+    end
+
     private
 
     def calculate_automatic_search_result(uri, path_item)

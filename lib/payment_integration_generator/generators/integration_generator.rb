@@ -11,7 +11,8 @@ module PaymentIntegrationGenerator
     PROVIDER_PRIVATE_METHODS = %i[build_payout_payload errors_mapping status_mapping].freeze
 
     SEARCHERS = %i[create_request_searcher fetch_status_searcher process_callback_searcher check_conditions_searcher]
-    SEARCHERS_TO_INITIALIZE = %i[create_request_searcher]
+    SEARCHERS_TO_INITIALIZE = %i[create_request_searcher fetch_status_searcher process_callback_searcher]
+    SEARCHER_FROM_TAKE_PAYLOAD_SCHEMA = :create_request_searcher
     def initialize(openapi_document:, integration_name:, output_folder_path: nil)
       super(openapi_document:, integration_name:, output_folder_path:)
     end
@@ -33,6 +34,10 @@ module PaymentIntegrationGenerator
 
       SEARCHERS_TO_INITIALIZE.each do |searcher|
         send(searcher).automatic_search_result
+      end
+
+      self.class.define_method(:payload_schema) do
+        send(SEARCHER_FROM_TAKE_PAYLOAD_SCHEMA).payload_schema
       end
     end
 
