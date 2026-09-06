@@ -1,8 +1,4 @@
-ERROR_MAP = {
-  400 => 'validation_error',
-  401 => 'invalid_credentials',
-  402 => 'insufficient_balance',
-  422 => 'validation_error',
-  429 => 'rate_limit',
-  500 => 'internal_error'
-}.freeze
+<%= exception_block[:todo] %>
+<%= exception_block[:error_map] %>
+
+
