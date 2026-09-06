@@ -4,8 +4,12 @@ module PaymentIntegrationGenerator
   class OpenApiOperationCatalog
     HTTP_METHODS = %i[get post put delete patch].freeze
 
-    def initialize(document:)
+    # @param document [Openapi3Parser::Node::Document] распарсенная OpenAPI-спецификация
+    # @param searchers [Hash<Symbol, PaymentIntegrationGenerator::BaseSearcher>]
+    #   searcher, уже использованные при генерации интеграции.
+    def initialize(document:, searchers:)
       @document = document
+      @searchers = searchers
     end
 
     def api_title
@@ -36,6 +40,9 @@ module PaymentIntegrationGenerator
       end
     end
 
+    # Возвращает все операции документа в нормализованном формате.
+    # @return [Array<Hash>] операции с method/path/description/request/responses
+    #   и исходным объектом операции в ключе :operation
     def operations
       @operations ||= begin
         result = []
@@ -61,9 +68,24 @@ module PaymentIntegrationGenerator
       operations.reject { |item| webhook_operations.include?(item) }
     end
 
+    # Проверяет, найден ли searcher эндпоинта создания платежа/выплаты.
+    # @return [Boolean]
     def payout_api?
-      text = operations.map { |item| "#{item[:id]} #{item[:path]}" }.join(" ").downcase
-      text.match?(/payout|withdraw|withdrawal|callback/) && payout_operations.any? { |item| create_operation?(item) }
+      !selected_operation(:create_request).nil?
+    end
+
+    # Возвращает операцию, выбранную соответствующим searcher.
+    # @param name [Symbol] имя операции: create_request, fetch_status или process_callback
+    # @return [Hash, nil] операция в формате catalog#operations
+    def selected_operation(name)
+      searcher = @searchers[name]
+      return nil unless searcher
+
+      searcher.automatic_search_result
+      result = searcher.search_result
+      return nil unless result
+
+      operations.find { |item| item[:path] == result[0] && item[:operation].equal?(result[1]) }
     end
 
     def schemas
