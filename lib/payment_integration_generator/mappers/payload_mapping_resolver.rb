@@ -12,7 +12,7 @@ module PaymentIntegrationGenerator
       "recipient.bank_name" => "operation.payout_requisite.dig('sbp', 'bank_name')"
     }.freeze
 
-    # @param payload_schema [Openapi3Parser::Node::Schema] request payload schema
+    # @param payload_schema [Openapi3Parser::Node::Schema]
     def initialize(payload_schema:)
       @payload_schema = payload_schema
     end
@@ -21,7 +21,7 @@ module PaymentIntegrationGenerator
     def call
       map_fields(properties(@payload_schema))
     end
-    
+
     # @return [Hash<String, String>] field paths and Ruby expressions
     def mapping_rules
       DEFAULT_MAPPING_RULES

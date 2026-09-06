@@ -17,7 +17,7 @@ module PaymentIntegrationGenerator
       raise "Both the --file and the --url are specified" if options[:file] && options[:url]
       raise "INTEGRATION_NAME must be specified" if integration_name.nil?
 
-      # Check if the integration_name is already PascalCase
+      # Проверка, что имя уже в PascalCase
       unless integration_name =~ /^[A-Z][a-z]+[A-Z]/
         integration_name = integration_name.split(/[_\-\s]+/).map(&:capitalize).join
       end
@@ -25,7 +25,6 @@ module PaymentIntegrationGenerator
       document = OpenApiParser.new(file_path: options[:file], url: options[:url])
                               .parse
 
-      # TODO: run integration generator
       integration_generator = PaymentIntegrationGenerator::IntegrationGenerator.new(
         openapi_document: document,
         integration_name: integration_name,

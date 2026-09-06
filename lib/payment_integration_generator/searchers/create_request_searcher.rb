@@ -96,7 +96,7 @@ module PaymentIntegrationGenerator
       return nil unless content
 
       content_type = PREFERRED_CONTENT_TYPES.find { |ct| content.keys.include?(ct) }
-      content_type ||= content.keys.first 
+      content_type ||= content.keys.first
 
       content[content_type]&.schema
     end

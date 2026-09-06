@@ -11,10 +11,10 @@ module PaymentIntegrationGenerator
     SEARCHERS = %i[create_request_searcher fetch_status_searcher process_callback_searcher check_conditions_searcher]
     SEARCHERS_TO_INITIALIZE = %i[create_request_searcher fetch_status_searcher process_callback_searcher]
     SEARCHER_FROM_TAKE_PAYLOAD_SCHEMA = :create_request_searcher
-    # @param openapi_document [Openapi3Parser::Node::Document] parsed OpenAPI document
-    # @param integration_name [String] generated integration name
-    # @param output_folder_path [String, nil] generated files destination
-    # @param payload_mapping_resolver [Class<PayloadMappingResolver>] mapping resolver class
+    # @param openapi_document [Openapi3Parser::Node::Document] запаршеная OpenAPI документация
+    # @param integration_name [String] имя интеграции
+    # @param output_folder_path [String, nil] путь до результирующей папки
+    # @param payload_mapping_resolver [Class<PayloadMappingResolver>]
     def initialize(
       openapi_document:,
       integration_name:,
@@ -60,7 +60,7 @@ module PaymentIntegrationGenerator
       SEARCHERS_TO_INITIALIZE
     end
 
-    # @return [Array<Hash>] payload mapping for the selected request schema
+    # @return [Array<Hash>] payload mapping для выбранной схемы запроса
     def payload_mapping
       initialize_searchers unless @searchers_initialized
       return [] if @create_request_searcher.todo_option
@@ -70,7 +70,7 @@ module PaymentIntegrationGenerator
       ).call
     end
 
-    # @return [String] generated build_payout_payload method source
+    # @return [String] сгенерированный build_payout_payload метод
     def payload_method_source
       initialize_searchers unless @searchers_initialized
 
@@ -79,7 +79,7 @@ module PaymentIntegrationGenerator
 
     private
 
-    # @return [String] generated payload method source
+    # @return [String] payload метод
     def build_payload_method_source
       return PayloadBuilder.new(mapping: payload_mapping).call unless @create_request_searcher.todo_option
 
@@ -97,7 +97,7 @@ module PaymentIntegrationGenerator
     end
 
     # @param operation_item <Openapi3Parser::Node::Operation>
-    # @return <String> method name for operation
+    # @return <String> имя метода для операции
     def collect_method_name(operation_item)
       snake_case(operation_item.operation_id)
     end
