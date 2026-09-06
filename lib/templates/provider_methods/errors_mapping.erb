@@ -1,3 +1,6 @@
+<%- if exception_block[:todo].empty? && exception_block[:error_map] == "ERROR_MAP = {}.freeze"-%>
+# TODO: не удалось однозначно определить эндпоинт создания выплаты в спеке — настройте вручную
+<%-end%>
 <%= exception_block[:todo] %>
 <%= exception_block[:error_map] %>
 

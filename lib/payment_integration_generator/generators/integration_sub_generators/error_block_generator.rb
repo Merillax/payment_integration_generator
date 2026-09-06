@@ -19,6 +19,7 @@ module PaymentIntegrationGenerator
     # @return [Hash] { rescue_block:, todo_comments:, method_level_todo:,
     #                  error_map:, raw_error_map:, todo: }.
     def self.call(operation)
+      return if operation.nil?
       parsed = ErrorStatusParser.call(operation)
       result = ErrorMapper.call(parsed)
       raw_error_map = ErrorMapper.error_map(parsed)

@@ -1,18 +1,18 @@
 def create_request(operation, request_method = 'create')
 <%- uri, path_item = searcher.search_result -%>
-<%- if searcher.todo_option || exception_block[:todo] -%>
+<%- if searcher.todo_option || exception_block&.[](:todo) -%>
   <%- if searcher.todo_option-%>
   # TODO: не удалось однозначно определить эндпоинт создания выплаты в спеке — настройте вручную
   <%- end -%>
-  <%- if exception_block[:todo] -%>
-  <%= exception_block[:todo_comments]%>
+  <%- if exception_block&.[](:todo) -%>
+  <%= exception_block&.[](:todo_comments)%>
   <%-end%>
   raise NotImplementedError
 <%- else -%>
   payload = build_payout_payload(operation)
   response = client.post("#{BASE_URL}<%= uri %>", json: payload, headers: auth_headers)
   parse_create_response(operation, response)
-<%= exception_block[:rescue_block] %>
-<%= exception_block[:todo_comments] %>
+<%= exception_block&.[](:rescue_block) %>
+<%= exception_block&.[](:todo_comments) %>
 <%- end -%>
 end
