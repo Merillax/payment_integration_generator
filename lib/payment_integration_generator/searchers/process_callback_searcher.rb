@@ -97,7 +97,7 @@ module PaymentIntegrationGenerator
     #   1. components.securitySchemes — apiKey-схема с in: header, имя которой
     #      похоже на "подпись" (signature/sign/hmac).
     #   2. parameters самой операции — обычный header-параметр с похожим именем,
-  
+    #
     # @param operation [Openapi3Parser::Node::Operation] найденная callback-операция
     # @return [Hash, nil] хэш вида { name:, description: }, либо nil, если
     #   подходящий заголовок не найден ни в одном из источников

@@ -57,7 +57,7 @@ module PaymentIntegrationGenerator
     # @return [Hash, void] {} если эндпоинт не подходит по базовым условиям
     def calculate_automatic_search_result(uri, path_item)
       return unless path_item.get
-      return unless uri.include?("{")   # тут параметр в пути обязателен, в отличие от create
+      return unless uri.include?("{") # тут параметр в пути обязателен, в отличие от create
 
       operation = path_item.get
       score = 0
