@@ -1,4 +1,10 @@
 def fetch_status(operation)
-  response = client.get("#{BASE_URL}/payouts/#{operation.provider_operation_id}")
-  map_status(response.body['status'])
+<%- uri, path_item = searcher.search_result -%>
+<%- if searcher.todo_option -%>
+  # TODO: не удалось однозначно определить эндпоинт создания выплаты в спеке — настройте вручную
+  raise NotImplementedError, "fetch_status не реализован: эндпоинт не найден автоматически"
+<%- else -%>
+  response = client.get("#{BASE_URL}<%= uri.gsub(/\{.*?\}/, '#{operation.provider_operation_id}') %>")
+  map_status(response.body['<%= searcher.status_field(path_item.get)[:name] %>'])
+<%- end -%>
 end

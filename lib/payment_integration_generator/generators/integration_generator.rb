@@ -5,8 +5,6 @@ module PaymentIntegrationGenerator
     DEFAULT_OUTPUT_PATH = "lib/integrations"
     PARTIAL_INDENT_SIZE = 4
 
-    SUPPORTED_HTTP_METHODS = %i[get post put delete].freeze
-
     PROVIDER_PUBLIC_METHODS = %i[create_request fetch_status process_callback check_conditions].freeze
     PROVIDER_PRIVATE_METHODS = %i[build_payout_payload errors_mapping status_mapping].freeze
 
@@ -18,7 +16,6 @@ module PaymentIntegrationGenerator
     end
 
     def call
-      # TODO: create output folder if doesn't exist
       generate_integration_class
     end
 
@@ -41,12 +38,15 @@ module PaymentIntegrationGenerator
       end
     end
 
+    # @return <String> список доступных серчеров
     def available_searchers
       SEARCHERS_TO_INITIALIZE
     end
 
     private
 
+    # Генерация класса интеграции с платежным сервисом
+    # @return <Void>
     def generate_integration_class
       template = File.read(File.join(TEMPLATES_DIR, "class.erb"))
       render_template(template, output_path + "/#{snake_case(@integration_name)}_service.rb", binding)
@@ -58,10 +58,13 @@ module PaymentIntegrationGenerator
       snake_case(operation_item.operation_id)
     end
 
+    # @return <String> адрес платежного сервиса
     def provider_default_url
       @openapi_document.servers.first.url
     end
 
+    # @param str <String>
+    # @return <String> строка в camel case
     def camelize(str)
       str.split('_').map(&:capitalize).join
     end

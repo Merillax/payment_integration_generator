@@ -7,7 +7,7 @@ module PaymentIntegrationGenerator
     desc "generate [INTEGRATION_NAME]", "Generate integration based on OpenAPI specification"
     method_option :file, type: :string, aliases: "-f", desc: "File to generate"
     method_option :url, type: :string, aliases: "-u", desc: "Url to generate"
-    method_option :output_folder, type: :string, aliases: "-u", desc: "Destination folder"
+    method_option :output_folder, type: :string, aliases: "-o", desc: "Destination folder"
     def generate(integration_name)
       raise "--file or --url must be specified" if options[:file].nil? && options[:url].nil?
       raise "Both the --file and the --url are specified" if options[:file] && options[:url]
@@ -20,12 +20,12 @@ module PaymentIntegrationGenerator
 
       document = OpenApiParser.new(file_path: options[:file], url: options[:url])
                               .parse
-      
+
       # TODO: run integration generator
       integration_generator = PaymentIntegrationGenerator::IntegrationGenerator.new(
         openapi_document: document,
         integration_name: integration_name,
-      # output_folder_path: options[:output_folder]
+        output_folder_path: options[:output_folder]
       )
       puts "--------------------------------"
       puts "-----INITIALIZING SEARCHERS-----"
@@ -44,7 +44,7 @@ module PaymentIntegrationGenerator
           3) Search pattern as format 'method uri', if result if not correct. For example 'post /payouts'.
         TEXT
         puts message
-        
+
         pattern = ask('')
         case pattern
         when "YES" then next
@@ -64,13 +64,13 @@ module PaymentIntegrationGenerator
       Generators::DocumentationGenerator.new(
         openapi_document: document,
         integration_name: integration_name,
-        # output_folder_path: options[:output_folder]
+        output_folder_path: options[:output_folder]
       ).call
 
       Generators::FixturesGenerator.new(
         openapi_document: document,
         integration_name: integration_name,
-        # output_folder_path: options[:output_folder]
+        output_folder_path: options[:output_folder]
       ).call
 
       puts "Done!"
