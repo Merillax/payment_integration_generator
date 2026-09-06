@@ -7,9 +7,10 @@ module PaymentIntegrationGenerator
     desc "generate [INTEGRATION_NAME]", "Generate integration based on OpenAPI specification"
     method_option :file, type: :string, aliases: "-f", desc: "File to generate"
     method_option :url, type: :string, aliases: "-u", desc: "Url to generate"
-    method_option :output_folder, type: :string, aliases: "-u", desc: "Destination folder"
+    method_option :output_folder, type: :string, aliases: "-o", desc: "Destination folder"
     method_option :payload_mapping_resolver,
       type: :string,
+      aliases: "-r",
       desc: "Path to a Ruby file with a custom payload mapping resolver"
     def generate(integration_name)
       raise "--file or --url must be specified" if options[:file].nil? && options[:url].nil?
