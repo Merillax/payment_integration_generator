@@ -3,9 +3,9 @@
 module PaymentIntegrationGenerator
   module Generators
     class FixturesGenerator < BaseGenerator
-      def initialize(openapi_document:, integration_name:, output_folder_path: nil)
-        super
-        @catalog = OpenApiOperationCatalog.new(document: openapi_document)
+      def initialize(openapi_document:, integration_name:, output_folder_path: nil, searchers:)
+        super(openapi_document:, integration_name:, output_folder_path:)
+        @catalog = OpenApiOperationCatalog.new(document: openapi_document, searchers: searchers)
       end
 
       def call
@@ -43,9 +43,9 @@ module PaymentIntegrationGenerator
       end
 
       def legacy_payout_fixtures
-        create = @catalog.payout_operations.find { |item| create_operation?(item) } || @catalog.payout_operations.first
-        status = @catalog.payout_operations.find { |item| status_operation?(item) }
-        callback = @catalog.webhook_operations.first
+        create = @catalog.selected_operation(:create_request) || @catalog.payout_operations.first
+        status = @catalog.selected_operation(:fetch_status)
+        callback = @catalog.selected_operation(:process_callback) || @catalog.webhook_operations.first
         responses = @catalog.response_examples(create)
         {
           create_request: { request: @catalog.request_example(create), response_201: first_success_response(responses), response_422: response_for(responses, /422|validation|invalid/) },
@@ -60,14 +60,6 @@ module PaymentIntegrationGenerator
         payload = @catalog.request_example(operation, status: status)
         payload = deep_replace_status(payload, status) if payload
         { payload: payload, expected_operation_status: @catalog.local_status(status) }
-      end
-
-      def create_operation?(operation)
-        "#{operation[:id]} #{operation[:path]}".downcase.match?(/create|init|charge|payment|pay|deposit|order/)
-      end
-
-      def status_operation?(operation)
-        "#{operation[:id]} #{operation[:path]}".downcase.match?(/status|check|state|info/)
       end
 
       def operation_key(operation)

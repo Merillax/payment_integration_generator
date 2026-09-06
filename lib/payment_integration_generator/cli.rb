@@ -68,13 +68,15 @@ module PaymentIntegrationGenerator
       Generators::DocumentationGenerator.new(
         openapi_document: document,
         integration_name: integration_name,
-        output_folder_path: options[:output_folder]
+        output_folder_path: options[:output_folder],
+        searchers: integration_searchers(integration_generator)
       ).call
 
       Generators::FixturesGenerator.new(
         openapi_document: document,
         integration_name: integration_name,
-        output_folder_path: options[:output_folder]
+        output_folder_path: options[:output_folder],
+        searchers: integration_searchers(integration_generator)
       ).call
 
       puts "Done!"
@@ -100,6 +102,14 @@ module PaymentIntegrationGenerator
         raise ArgumentError, "#{class_name} must inherit from PayloadMappingResolver"
       rescue NameError
         raise NameError, "Could not find #{class_name} in #{absolute_path}"
+      end
+
+      def integration_searchers(integration_generator)
+        {
+          create_request: integration_generator.create_request_searcher,
+          fetch_status: integration_generator.fetch_status_searcher,
+          process_callback: integration_generator.process_callback_searcher
+        }
       end
 
       def handle_manually_user_input(pattern, integration_generator, searcher)
